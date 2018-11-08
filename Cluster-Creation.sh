@@ -37,61 +37,12 @@ aws-iam-authenticator help
 #pip install --upgrade --user awscli
 #export PATH=/home/ec2-user/.local/bin:$PATH
 #aws --version
+cd ~/Terraform-Files/aws-terraform-eks
+sudo terraform init
+sudo terraform apply -input=false -auto-approve
 
-########################################CONFIGURING AWS DETAILS#############################################
+#KUBECONFIG=$KUBECONFIG:~/.kube/config-$CLUSTER_NAME
+#export KUBECONFIG
+#echo 'export KUBECONFIG=$KUBECONFIG:~/.kube/config-$CLUSTER_NAME' >> ~/.bashrc
 
-#aws configure set aws_access_key_id 
-#aws configure set aws_secret_access_key 
-#aws configure set default.region us-east-1
-
-#######################################CREATION OF CLUSTER##################################################
-
-aws eks create-cluster --name $CLUSTER_NAME --role-arn $ROLE_ARN --resources-vpc-config subnetIds=$SUBNET1,$SUBNET2,securityGroupIds=$SECURITY_GROUP
-
-sleep 13m
-
-endpoint=$(aws eks describe-cluster --name $CLUSTER_NAME --query cluster.endpoint --output text)
-certificate=$(aws eks describe-cluster --name $CLUSTER_NAME --query cluster.certificateAuthority.data --output text)
-
-cd ~ && touch endpoint
-echo $endpoint > endpoint
-echo $certificate >> endpoint
-
-mkdir -p ~/.kube
-cd ~/.kube && touch config-$CLUSTER_NAME
-cat >~/.kube/config-$CLUSTER_NAME <<EOL
-apiVersion: v1
-clusters:
-- cluster:
-    server: $endpoint
-    certificate-authority-data: $certificate
-  name: kubernetes
-contexts:
-- context:
-    cluster: kubernetes
-    user: aws
-  name: aws
-current-context: aws
-kind: Config
-preferences: {}
-users:
-- name: aws
-  user:
-    exec:
-      apiVersion: client.authentication.k8s.io/v1alpha1
-      command: aws-iam-authenticator
-      args:
-        - "token"
-        - "-i"
-        - "$CLUSTER_NAME"
-      #  - "-r"
-      #  - "arn:aws:iam::715146130151:role/Devops_demo"
-      # env:
-        # - name: AWS_PROFILE
-        #   value: "<aws-profile>"
-EOL
-KUBECONFIG=$KUBECONFIG:~/.kube/config-$CLUSTER_NAME
-export KUBECONFIG
-echo 'export KUBECONFIG=$KUBECONFIG:~/.kube/config-$CLUSTER_NAME' >> ~/.bashrc
-
-kubectl get svc
+#kubectl get svc
